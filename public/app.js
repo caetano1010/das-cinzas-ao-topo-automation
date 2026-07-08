@@ -67,8 +67,29 @@ async function fetchSettings() {
     renderMetaStatus();
     renderTunnelStatus();
     renderCloudSyncStatus();
+    
+    // Ajustar interface para ambiente Cloud (Render)
+    adjustUIForCloud();
   } catch (err) {
     console.error('Erro ao buscar configurações:', err);
+  }
+}
+
+// Ocultar abas e cards locais quando acessado via URL de nuvem (Render)
+function adjustUIForCloud() {
+  const isCloudEnv = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
+  if (isCloudEnv) {
+    // 1. Ocultar aba de Vídeos Prontos
+    const videosTabBtn = document.getElementById('tab-btn-videos');
+    if (videosTabBtn) videosTabBtn.style.display = 'none';
+    
+    // 2. Ocultar card de Sincronização Nuvem no painel
+    const cloudSyncCard = document.getElementById('cloud-sync-container');
+    if (cloudSyncCard) cloudSyncCard.style.display = 'none';
+    
+    // 3. Ocultar badge de Túnel
+    const tunnelBadge = document.getElementById('tunnel-badge');
+    if (tunnelBadge) tunnelBadge.style.display = 'none';
   }
 }
 
