@@ -7,15 +7,34 @@ let storageBucket = null;
 let firebaseInitialized = false;
 
 // Tentar carregar credenciais do caminho configurado no .env ou do local padrão
-const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH 
-  ? path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
-  : path.join(__dirname, 'firebase-service-account.json');
-
+let serviceAccount = null;
 const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
 
-if (fs.existsSync(serviceAccountPath) && bucketName) {
+if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON && bucketName) {
   try {
-    const serviceAccount = require(serviceAccountPath);
+    serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
+    console.log('[Firebase] Carregando credenciais via variável de ambiente JSON.');
+  } catch (err) {
+    console.error('[Firebase] Erro ao analisar FIREBASE_SERVICE_ACCOUNT_JSON:', err);
+  }
+} else {
+  // Tentar carregar do arquivo local
+  const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH 
+    ? path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT_PATH)
+    : path.join(__dirname, 'firebase-service-account.json');
+
+  if (fs.existsSync(serviceAccountPath) && bucketName) {
+    try {
+      serviceAccount = require(serviceAccountPath);
+      console.log('[Firebase] Carregando credenciais via arquivo local.');
+    } catch (err) {
+      console.error('[Firebase] Erro ao ler arquivo de credenciais local:', err);
+    }
+  }
+}
+
+if (serviceAccount && bucketName) {
+  try {
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
       storageBucket: bucketName
