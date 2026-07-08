@@ -1,0 +1,15 @@
+name: Keep Render Alive
+
+on:
+  schedule:
+    - cron: '*/10 * * * *' # Executa a cada 10 minutos
+  workflow_dispatch: # Permite disparar manualmente pelo painel do GitHub se necessário
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Render Server
+        run: |
+          curl -s https://das-cinzas-ao-topo-automation.onrender.com > /dev/null
+          echo "Render pingado com sucesso às $(date)"
