@@ -1,4 +1,6 @@
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getStorage } = require('firebase-admin/storage');
 const path = require('path');
 const fs = require('fs');
 
@@ -6,7 +8,6 @@ let dbFirestore = null;
 let storageBucket = null;
 let firebaseInitialized = false;
 
-// Tentar carregar credenciais do caminho configurado no .env ou do local padrão
 let serviceAccount = null;
 const bucketName = process.env.FIREBASE_STORAGE_BUCKET;
 
@@ -35,12 +36,12 @@ if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON && bucketName) {
 
 if (serviceAccount && bucketName) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+    const app = initializeApp({
+      credential: cert(serviceAccount),
       storageBucket: bucketName
     });
-    dbFirestore = admin.firestore();
-    storageBucket = admin.storage().bucket();
+    dbFirestore = getFirestore(app);
+    storageBucket = getStorage(app).bucket();
     firebaseInitialized = true;
     console.log('[Firebase] Inicializado com sucesso em modo Nuvem.');
   } catch (err) {
@@ -51,7 +52,6 @@ if (serviceAccount && bucketName) {
 }
 
 module.exports = {
-  admin,
   dbFirestore,
   storageBucket,
   isCloudEnabled: () => firebaseInitialized
