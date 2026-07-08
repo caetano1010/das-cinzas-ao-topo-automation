@@ -163,6 +163,8 @@ class DatabaseService {
       META_ACCESS_TOKEN: process.env.META_ACCESS_TOKEN || '',
       INSTAGRAM_ACCOUNT_ID: process.env.INSTAGRAM_ACCOUNT_ID || '',
       FACEBOOK_PAGE_ID: process.env.FACEBOOK_PAGE_ID || '',
+      THREADS_ACCESS_TOKEN: process.env.THREADS_ACCESS_TOKEN || '',
+      THREADS_ACCOUNT_ID: process.env.THREADS_ACCOUNT_ID || '',
       PORT: process.env.PORT || '3000',
       VIDEOS_DIR: process.env.VIDEOS_DIR || 'd:/canais-dark/das-cinzas-ao-topo/Videos-prontos-03-06-26'
     };
@@ -175,6 +177,8 @@ class DatabaseService {
     process.env.META_ACCESS_TOKEN = settings.META_ACCESS_TOKEN || '';
     process.env.INSTAGRAM_ACCOUNT_ID = settings.INSTAGRAM_ACCOUNT_ID || '';
     process.env.FACEBOOK_PAGE_ID = settings.FACEBOOK_PAGE_ID || '';
+    process.env.THREADS_ACCESS_TOKEN = settings.THREADS_ACCESS_TOKEN || '';
+    process.env.THREADS_ACCOUNT_ID = settings.THREADS_ACCOUNT_ID || '';
     
     // 2. Gravar no arquivo .env
     const envContent = [
@@ -183,6 +187,8 @@ class DatabaseService {
       `META_ACCESS_TOKEN=${settings.META_ACCESS_TOKEN || ''}`,
       `INSTAGRAM_ACCOUNT_ID=${settings.INSTAGRAM_ACCOUNT_ID || ''}`,
       `FACEBOOK_PAGE_ID=${settings.FACEBOOK_PAGE_ID || ''}`,
+      `THREADS_ACCESS_TOKEN=${settings.THREADS_ACCESS_TOKEN || ''}`,
+      `THREADS_ACCOUNT_ID=${settings.THREADS_ACCOUNT_ID || ''}`,
       `PORT=${settings.PORT || process.env.PORT || 3000}`,
       `VIDEOS_DIR=${settings.VIDEOS_DIR || process.env.VIDEOS_DIR || 'd:/canais-dark/das-cinzas-ao-topo/Videos-prontos-03-06-26'}`
     ].join('\n');

@@ -237,7 +237,7 @@ app.get('/api/schedule', async (req, res) => {
 
 // Agendar ou publicar post
 app.post('/api/schedule', async (req, res) => {
-  const { videoId, fileName, caption, scheduledAt, postInstagram, postFacebook, postTrial, isAiGenerated } = req.body;
+  const { videoId, fileName, caption, scheduledAt, postInstagram, postFacebook, postThreads, postTrial, isAiGenerated } = req.body;
 
   const newPost = {
     id: '_' + Math.random().toString(36).substr(2, 9),
@@ -246,6 +246,7 @@ app.post('/api/schedule', async (req, res) => {
     caption,
     postInstagram: !!postInstagram,
     postFacebook: !!postFacebook,
+    postThreads: !!postThreads,
     postTrial: !!postTrial,
     isAiGenerated: !!isAiGenerated, // Salvar flag de conteúdo gerado por IA
     status: scheduledAt ? 'Agendado' : 'Publicando...',
@@ -388,6 +389,8 @@ async function publishPostAsync(postId) {
   const accessToken = settings.META_ACCESS_TOKEN;
   const instagramAccountId = settings.INSTAGRAM_ACCOUNT_ID;
   const facebookPageId = settings.FACEBOOK_PAGE_ID;
+  const threadsAccessToken = settings.THREADS_ACCESS_TOKEN || accessToken;
+  const threadsAccountId = settings.THREADS_ACCOUNT_ID;
 
   if (!accessToken) {
     await db.updateScheduleStatus(postId, 'Erro', 'Token de Acesso do Meta ausente no .env');
@@ -396,10 +399,11 @@ async function publishPostAsync(postId) {
 
   let igPostId = null;
   let fbPostId = null;
+  let threadsPostId = null;
   const errors = [];
 
   // 1. Garantir que o túnel esteja ativo se não tivermos uma URL na nuvem
-  if (!post.videoUrl && !publicUrl) {
+  if ((post.postInstagram || post.postFacebook || post.postThreads) && !post.videoUrl && !publicUrl) {
     console.log('[Publisher] Túnel não está disponível. Tentando religar...');
     await startTunnel(PORT);
     if (!publicUrl) {
@@ -500,12 +504,27 @@ async function publishPostAsync(postId) {
       errors.push('ID da Página do Facebook ausente');
     } else {
       try {
+        console.log('[Publisher] Obtendo Page Access Token para a página:', facebookPageId);
+        let pageAccessToken = accessToken;
+        try {
+          const pageTokenRes = await axios.get(`https://graph.facebook.com/v20.0/${facebookPageId}`, {
+            params: {
+              fields: 'access_token',
+              access_token: accessToken
+            }
+          });
+          pageAccessToken = pageTokenRes.data.access_token || accessToken;
+          console.log('[Publisher] Page Access Token obtido com sucesso!');
+        } catch (pageTokenErr) {
+          console.warn('[Publisher] Não foi possível obter o Page Access Token, usando o token padrão:', pageTokenErr.response?.data?.error?.message || pageTokenErr.message);
+        }
+
         console.log('[Publisher] Publicando vídeo na Página do Facebook...');
         const fbPublishRes = await axios.post(`https://graph.facebook.com/v20.0/${facebookPageId}/videos`, {
           file_url: videoUrl,
           description: post.caption,
           title: `Reel ${post.videoId}`,
-          access_token: accessToken
+          access_token: pageAccessToken
         });
 
         fbPostId = fbPublishRes.data.id;
@@ -517,14 +536,91 @@ async function publishPostAsync(postId) {
     }
   }
 
-  // 4. Atualizar status final no DB
+  // 4. Publicar no Threads (Vídeo)
+  if (post.postThreads) {
+    if (!threadsAccessToken) {
+      errors.push('Token de Acesso do Threads ausente');
+    } else {
+      try {
+        console.log('[Publisher] Criando container de mídia no Threads...');
+        
+        let resolvedThreadsId = threadsAccountId;
+        if (!resolvedThreadsId) {
+          console.log('[Publisher] ID do Threads não configurado. Resolvendo via /me...');
+          const meRes = await axios.get('https://graph.threads.net/v1.0/me', {
+            params: { fields: 'id', access_token: threadsAccessToken }
+          });
+          resolvedThreadsId = meRes.data.id;
+          console.log(`[Publisher] ID Threads resolvido: ${resolvedThreadsId}`);
+        }
+
+        const threadsContainerPayload = {
+          media_type: 'VIDEO',
+          video_url: videoUrl,
+          text: post.caption,
+          access_token: threadsAccessToken
+        };
+
+        const createThreadsContainerRes = await axios.post(
+          `https://graph.threads.net/v1.0/${resolvedThreadsId}/threads`,
+          threadsContainerPayload
+        );
+
+        const threadsContainerId = createThreadsContainerRes.data.id;
+        console.log(`[Publisher] Container Threads criado com ID: ${threadsContainerId}. Aguardando processamento...`);
+
+        // Polling do status do vídeo
+        let threadsStatus = 'IN_PROGRESS';
+        let threadsCheckCount = 0;
+        const threadsMaxChecks = 30; // 2.5 minutos
+
+        while (threadsStatus === 'IN_PROGRESS' && threadsCheckCount < threadsMaxChecks) {
+          await new Promise(resolve => setTimeout(resolve, 5000));
+          threadsCheckCount++;
+
+          const statusRes = await axios.get(`https://graph.threads.net/v1.0/${threadsContainerId}`, {
+            params: {
+              fields: 'status,error_message',
+              access_token: threadsAccessToken
+            }
+          });
+
+          threadsStatus = statusRes.data.status;
+          console.log(`[Publisher] Status do container Threads (tentativa ${threadsCheckCount}): ${threadsStatus}`);
+          if (threadsStatus === 'ERROR' || threadsStatus === 'EXPIRED') {
+            console.error('[Publisher] Erro no processamento do Threads:', statusRes.data.error_message);
+            errors.push(`Threads: ${statusRes.data.error_message || 'Erro de processamento ou contêiner expirado'}`);
+            break;
+          }
+        }
+
+        if (threadsStatus === 'FINISHED') {
+          console.log('[Publisher] Vídeo Threads processado! Publicando post no Threads...');
+          const publishRes = await axios.post(`https://graph.threads.net/v1.0/${resolvedThreadsId}/threads_publish`, {
+            creation_id: threadsContainerId,
+            access_token: threadsAccessToken
+          });
+          threadsPostId = publishRes.data.id;
+          console.log(`[Publisher] Post do Threads publicado! ID: ${threadsPostId}`);
+        } else if (threadsStatus !== 'FAILED') {
+          errors.push(`Processamento do vídeo no Threads expirou (Status: ${threadsStatus})`);
+        }
+      } catch (err) {
+        console.error('[Publisher] Erro ao postar no Threads:', err.response?.data || err.message);
+        errors.push(`Threads: ${err.response?.data?.error?.message || err.message}`);
+      }
+    }
+  }
+
+  // 5. Atualizar status final no DB
   if (errors.length > 0) {
     await db.updateScheduleStatus(postId, 'Erro', errors.join(' | '));
     console.log(`[Publisher] Publicação concluída com erros: ${errors.join(' | ')}`);
   } else {
     await db.updateScheduleStatus(postId, 'Publicado', null, new Date().toISOString(), {
       instagramMediaId: igPostId,
-      facebookVideoId: fbPostId
+      facebookVideoId: fbPostId,
+      threadsPostId: threadsPostId
     });
     console.log(`[Publisher] Publicação concluída com sucesso!`);
   }

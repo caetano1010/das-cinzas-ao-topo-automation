@@ -135,7 +135,9 @@ async function saveMetaSettings(event) {
     META_APP_SECRET: document.getElementById('settings-app-secret').value.trim(),
     META_ACCESS_TOKEN: document.getElementById('settings-access-token').value.trim(),
     INSTAGRAM_ACCOUNT_ID: document.getElementById('settings-instagram-id').value.trim(),
-    FACEBOOK_PAGE_ID: document.getElementById('settings-facebook-id').value.trim()
+    FACEBOOK_PAGE_ID: document.getElementById('settings-facebook-id').value.trim(),
+    THREADS_ACCESS_TOKEN: document.getElementById('settings-threads-token').value.trim(),
+    THREADS_ACCOUNT_ID: document.getElementById('settings-threads-id').value.trim()
   };
 
   try {
@@ -176,13 +178,14 @@ async function submitPostSchedule(event) {
     caption: document.getElementById('form-caption').value,
     postInstagram: document.getElementById('form-post-instagram').checked,
     postFacebook: document.getElementById('form-post-facebook').checked,
+    postThreads: document.getElementById('form-post-threads').checked,
     postTrial: document.getElementById('form-post-trial').checked,
     isAiGenerated: document.getElementById('form-post-ai-generated').checked,
     scheduledAt
   };
 
-  if (!payload.postInstagram && !payload.postFacebook) {
-    alert('Por favor, selecione pelo menos uma plataforma (Instagram ou Facebook).');
+  if (!payload.postInstagram && !payload.postFacebook && !payload.postThreads) {
+    alert('Por favor, selecione pelo menos uma plataforma (Instagram, Facebook ou Threads).');
     return;
   }
 
@@ -332,6 +335,8 @@ function renderSettingsForm() {
   document.getElementById('settings-access-token').value = state.settings.META_ACCESS_TOKEN || '';
   document.getElementById('settings-instagram-id').value = state.settings.INSTAGRAM_ACCOUNT_ID || '';
   document.getElementById('settings-facebook-id').value = state.settings.FACEBOOK_PAGE_ID || '';
+  document.getElementById('settings-threads-token').value = state.settings.THREADS_ACCESS_TOKEN || '';
+  document.getElementById('settings-threads-id').value = state.settings.THREADS_ACCOUNT_ID || '';
 }
 
 // Renderizar resumo de contagens no painel
@@ -418,6 +423,7 @@ function renderScheduleQueue() {
     const platforms = [];
     if (post.postInstagram) platforms.push('Instagram');
     if (post.postFacebook) platforms.push('Facebook');
+    if (post.postThreads) platforms.push('Threads');
 
     const cleanCaption = post.caption ? post.caption.split('\n')[0] : 'Sem legenda';
 
@@ -462,6 +468,7 @@ function renderPostsHistory() {
     const platforms = [];
     if (post.postInstagram) platforms.push('Instagram');
     if (post.postFacebook) platforms.push('Facebook');
+    if (post.postThreads) platforms.push('Threads');
 
     const statusBadge = post.status === 'Publicado'
       ? `<span class="badge publicado">Publicado</span>`
