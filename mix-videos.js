@@ -1,8 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
+const dotenv = require('dotenv');
 
-const videosDir = 'd:/canais-dark/das-cinzas-ao-topo/Videos-prontos-03-06-26';
+// Carregar variáveis de ambiente
+dotenv.config();
+
+const videosDir = process.env.VIDEOS_DIR || 'd:/canais-dark/das-cinzas-ao-topo/Videos-prontos-12-15-07-26';
 const audiosDir = path.join(__dirname, 'public', 'audios');
 const backupDir = path.join(videosDir, 'original-backup');
 

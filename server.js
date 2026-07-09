@@ -29,10 +29,28 @@ app.use('/videos', express.static(path.resolve(videosDir)));
 let publicUrl = '';
 let tunnelInstance = null;
 
+// Parar túnel local
+function stopTunnel() {
+  if (tunnelInstance) {
+    console.log('[Tunnel] Fechando o túnel local devido à pausa da automação...');
+    try {
+      tunnelInstance.close();
+    } catch (e) {
+      console.error('[Tunnel] Erro ao fechar o túnel:', e.message);
+    }
+    tunnelInstance = null;
+    publicUrl = '';
+  }
+}
+
 // Inicializar túnel local
 async function startTunnel(port, retries = 5) {
   if (firebase.isCloudEnabled()) {
     console.log('[Tunnel] Cloud habilitado. Pulando inicialização do Localtunnel.');
+    return;
+  }
+  if (process.env.AUTOMATION_PAUSED === 'true') {
+    console.log('[Tunnel] Automação pausada. Pulando inicialização do Localtunnel para evitar exposição e sinais de bot.');
     return;
   }
   if (tunnelInstance) {
@@ -48,12 +66,20 @@ async function startTunnel(port, retries = 5) {
     console.log(`[Tunnel] Servidor local exposto publicamente em: ${publicUrl}`);
 
     tunnelInstance.on('close', () => {
+      // Só tenta reconectar se não foi pausado manualmente
+      if (process.env.AUTOMATION_PAUSED === 'true') {
+        console.log('[Tunnel] O túnel foi fechado e a automação está pausada. Não reconectando.');
+        return;
+      }
       console.log('[Tunnel] O túnel foi fechado. Tentando restabelecer...');
       publicUrl = '';
       setTimeout(() => startTunnel(port), 5000);
     });
   } catch (err) {
     console.error('[Tunnel] Falha ao criar o túnel:', err);
+    if (process.env.AUTOMATION_PAUSED === 'true') {
+      return;
+    }
     if (retries > 0) {
       console.log(`[Tunnel] Tentando novamente em 10 segundos... (Tentativas restantes: ${retries})`);
       setTimeout(() => startTunnel(port, retries - 1), 10000);
@@ -113,9 +139,19 @@ app.get('/api/settings', async (req, res) => {
 });
 
 // Salvar configurações
-app.post('/api/settings', (req, res) => {
-  const result = db.saveSettings(req.body);
+app.post('/api/settings', async (req, res) => {
+  const settings = req.body;
+  const result = db.saveSettings(settings);
   if (result.success) {
+    // Aplicar controle de automação e túnel dinamicamente
+    if (settings.AUTOMATION_PAUSED === 'true') {
+      stopTunnel();
+    } else {
+      if (!publicUrl && !tunnelInstance) {
+        console.log('[Settings] Automação ativada. Inicializando túnel...');
+        startTunnel(PORT);
+      }
+    }
     res.json(result);
   } else {
     res.status(500).json(result);
@@ -124,11 +160,37 @@ app.post('/api/settings', (req, res) => {
 
 // ==================== ROTAS DE VÍDEOS ====================
 
-// Listar vídeos prontos na pasta
-app.get('/api/videos', (req, res) => {
+// Listar vídeos prontos na pasta (ou na nuvem, via Firestore)
+app.get('/api/videos', async (req, res) => {
   try {
-    const videos = storage.listVideos();
-    res.json({ success: true, videos });
+    // Tentar listar localmente primeiro
+    let localVideos = [];
+    let hasLocalDir = false;
+    
+    try {
+      const localVideosDir = storage.getVideosDirectory();
+      hasLocalDir = fs.existsSync(localVideosDir);
+      if (hasLocalDir) {
+        localVideos = storage.listVideos();
+      }
+    } catch (e) {
+      console.warn('[Videos] Erro ao escanear pasta de vídeos local:', e.message);
+    }
+
+    // Se estiver rodando na nuvem (Firebase Cloud ativo e sem pasta local)
+    if (firebase.isCloudEnabled() && (!hasLocalDir || localVideos.length === 0)) {
+      console.log('[Videos] Modo nuvem detectado ou galeria local vazia. Buscando vídeos do Firestore...');
+      const snapshot = await firebase.dbFirestore.collection('ready_videos').get();
+      const videos = [];
+      snapshot.forEach(doc => {
+        videos.push(doc.data());
+      });
+      // Ordenar os vídeos de forma correta (numericamente pelo ID)
+      videos.sort((a, b) => parseInt(a.id) - parseInt(b.id));
+      return res.json({ success: true, videos });
+    }
+
+    res.json({ success: true, videos: localVideos });
   } catch (err) {
     console.error('[Videos] Erro ao listar vídeos:', err.message);
     res.status(500).json({ success: false, message: err.message });
@@ -313,13 +375,41 @@ app.post('/api/cloud/sync', async (req, res) => {
       await firebase.dbFirestore.collection('posts').doc(post.id).set(post);
     }
 
-    // 4. Salvar de volta no banco local para reter as URLs do Firebase localmente
+    // 4. Sincronizar todos os vídeos prontos para a Galeria da Nuvem
+    let localVideos = [];
+    try {
+      localVideos = storage.listVideos();
+    } catch (e) {
+      console.warn('[Sync] Não foi possível ler pasta local de vídeos prontos:', e.message);
+    }
+
+    console.log(`[Sync] Sincronizando ${localVideos.length} vídeos da pasta local para a Galeria na Nuvem...`);
+    for (const video of localVideos) {
+      const localFilePath = path.join(videosDir, video.fileName);
+      if (fs.existsSync(localFilePath)) {
+        console.log(`[Sync] Fazendo upload do vídeo da galeria: ${video.fileName}...`);
+        const cloudUrl = await storage.uploadToCloud(video.fileName, localFilePath);
+        
+        const cloudVideoDoc = {
+          id: video.id,
+          fileName: video.fileName,
+          caption: video.caption || '',
+          url: cloudUrl,
+          updatedAt: new Date().toISOString()
+        };
+        
+        await firebase.dbFirestore.collection('ready_videos').doc(video.id).set(cloudVideoDoc);
+        uploadedCount++;
+      }
+    }
+
+    // 5. Salvar de volta no banco local para reter as URLs do Firebase localmente
     db.write(localDb);
 
     res.json({
       success: true,
       message: 'Sincronização concluída com sucesso!',
-      totalSynced: localSchedule.length,
+      totalSynced: localSchedule.length + localVideos.length,
       uploadedCount
     });
   } catch (err) {
@@ -328,10 +418,55 @@ app.post('/api/cloud/sync', async (req, res) => {
   }
 });
 
+// Limpar banco de dados local e Firestore (Fila e Histórico)
+app.post('/api/admin/clear-db', async (req, res) => {
+  try {
+    // 1. Limpar banco local
+    const localDb = { posts: [], schedule: [] };
+    db.write(localDb);
+    console.log('[Admin] Banco de dados local limpo com sucesso.');
+
+    // 2. Se a nuvem estiver ativa, deletar tudo no Firestore
+    if (firebase.isCloudEnabled()) {
+      console.log('[Admin] Limpando dados do Firestore...');
+      
+      const deleteCollection = async (collectionName) => {
+        const collectionRef = firebase.dbFirestore.collection(collectionName);
+        const snapshot = await collectionRef.get();
+        const batch = firebase.dbFirestore.batch();
+        
+        let count = 0;
+        snapshot.docs.forEach(doc => {
+          batch.delete(doc.ref);
+          count++;
+        });
+        
+        if (count > 0) {
+          await batch.commit();
+        }
+        console.log(`[Admin] Coleção "${collectionName}" limpa (${count} docs deletados).`);
+      };
+
+      await deleteCollection('schedule');
+      await deleteCollection('posts');
+    }
+
+    res.json({ success: true, message: 'Fila de agendamentos e histórico de publicações limpos com sucesso!' });
+  } catch (err) {
+    console.error('[Admin] Erro ao limpar dados:', err);
+    res.status(500).json({ success: false, message: `Erro ao limpar dados: ${err.message}` });
+  }
+});
+
 // ==================== WEBHOOKS DA META (FB/IG COMPOSTOS) ====================
 
 // Rota de Verificação do Webhook (GET) - Exigida pela Meta para ativação
 app.get('/webhook', (req, res) => {
+  if (process.env.AUTOMATION_PAUSED === 'true') {
+    console.log('[Webhook] Tentativa de verificação com automação pausada. Rejeitando.');
+    return res.status(503).send('Automação Pausada.');
+  }
+
   const VERIFY_TOKEN = process.env.WEBHOOK_VERIFY_TOKEN || 'das_cinzas_ao_topo_secret_token';
   
   const mode = req.query['hub.mode'];
@@ -352,6 +487,11 @@ app.get('/webhook', (req, res) => {
 
 // Rota de Eventos do Webhook (POST) - Onde o Meta envia os comentários/DMs
 app.post('/webhook', (req, res) => {
+  if (process.env.AUTOMATION_PAUSED === 'true') {
+    console.log('[Webhook] Novo evento recebido do Meta, mas a automação está pausada. Retornando 503.');
+    return res.status(503).send('Automação Pausada.');
+  }
+
   const body = req.body;
 
   if (body.object === 'page' || body.object === 'instagram') {
@@ -629,6 +769,10 @@ async function publishPostAsync(postId) {
 // ==================== SERVIÇO DE CRON JOB (AGENDADOR) ====================
 
 cron.schedule('* * * * *', async () => {
+  if (process.env.AUTOMATION_PAUSED === 'true') {
+    console.log('[Cron] Automação pausada em .env. Ignorando verificação da fila.');
+    return;
+  }
   const schedule = await db.getSchedule();
   const now = new Date();
 

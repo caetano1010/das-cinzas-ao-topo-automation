@@ -1,24 +1,31 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const db = require('./databaseService');
 const fs = require('fs');
 const path = require('path');
 
 const videosDir = db.getSettings().VIDEOS_DIR;
 
-// Definir os horários em horário local do Brasil (-03:00)
+// Definir os horários em horário local do Brasil (-03:00) para o Lote 2
 const baseSchedule = [
-  { day: '2026-07-08', times: ['07:00', '12:30', '19:30'] },
-  { day: '2026-07-09', times: ['07:00', '12:30', '19:30'] },
-  { day: '2026-07-10', times: ['07:00', '12:30', '19:30'] },
-  { day: '2026-07-11', times: ['07:00', '12:30', '19:30'] }
+  { day: '2026-07-12', times: ['07:00', '12:30', '19:30'] },
+  { day: '2026-07-13', times: ['07:00', '12:30', '19:30'] },
+  { day: '2026-07-14', times: ['07:00', '12:30', '19:30'] },
+  { day: '2026-07-15', times: ['07:00', '12:30', '19:30'] }
 ];
 
-console.log('=== Iniciando Agendamento dos 12 Reels ===');
+console.log('=== Iniciando Agendamento dos 12 Reels (Lote 2) ===');
 
-// Limpar agendamentos anteriores para evitar bagunça
+// Preservar posts agendados do Lote 1 e filtrar apenas agendamentos futuros do Lote 2
 const currentDb = db.read();
-currentDb.schedule = [];
+currentDb.schedule = (currentDb.schedule || []).filter(post => {
+  const date = new Date(post.scheduledAt);
+  // Mantém apenas o que for agendado para antes de 12 de julho de 2026
+  return date < new Date('2026-07-12T00:00:00Z');
+});
 db.write(currentDb);
-console.log('[DB] Fila de agendamento limpa.');
+console.log('[DB] Fila filtrada para preservar agendamentos do Lote 1.');
 
 let scheduledCount = 0;
 

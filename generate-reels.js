@@ -9,78 +9,93 @@ dotenv.config();
 
 const workspaceRoot = 'd:/canais-dark/das-cinzas-ao-topo';
 const rawVideosDir = path.join(workspaceRoot, 'Videos-brutos');
-const readyVideosDir = path.join(workspaceRoot, 'Videos-prontos-03-06-26');
+const readyVideosDir = process.env.VIDEOS_DIR || path.join(workspaceRoot, 'Videos-prontos-12-15-07-26');
 const processedDir = path.join(workspaceRoot, '_archive', 'Videos-brutos-processados');
 const logoPath = path.join(workspaceRoot, 'logo-oficial-sem-fundo.png');
 const fontsDir = path.join(__dirname, 'fonts');
 
-// Lista de Frases locales de Fallback (Altamente curadas baseadas na pesquisa competitiva)
+// Lista de Frases locales de Fallback (Cravadas exatamente para o Lote 2 de Conteúdo)
 const fallbackQuotes = [
   {
-    quoteLine1: "Existe um poder que poucos percebem:",
-    quoteLine2: "o de não precisar provar nada para ninguém.",
-    caption: "Quando você encontra o seu próprio centro, a opinião do mundo exterior perde todo o poder sobre você. Não busque validação, busque progresso silencioso.\n\n#mentalidadeinabalavel #autodominio #estoicismo #silencio #dascirzasaotopo"
+    quoteLine1: "O verdadeiro progresso é esculpido na privacidade do seu esforço silencioso,",
+    quoteLine2: "longe de qualquer aplauso ou validação,",
+    quoteLine3: "enquanto a maioria desperdiça energia tentando provar o seu valor.",
+    caption: "O homem que aprende a trabalhar na escuridão não depende de holofotes para manter-se firme. Foque na sua rotina invisível, pois o sucesso duradouro é construído longe do barulho. Deixe que os outros disputem a atenção vazia; o seu valor é medido por resultados silenciosos.\n\n#disciplina #estoicismo #foco #mentalidadeforte #dascinzasaotopo"
   },
   {
-    quoteLine1: "Sorria, seja educado e trate todos bem.",
-    quoteLine2: "Mas nunca seja ingênuo com quem caminha ao seu lado.",
-    caption: "Educação é uma marca de respeito próprio, mas a ingenuidade é fraqueza. Saiba ler as intenções das pessoas e proteja seus planos do barulho alheio.\n\n#condutamasculina #respeito #limites #foco #homemdevalor"
+    quoteLine1: "Deseje o topo com toda a força da sua alma,",
+    quoteLine2: "mas aprenda a governar sua mente com frieza estratégica,",
+    quoteLine3: "pois o homem impulsivo sabota a própria escalada.",
+    caption: "O desejo sem autocontrole é uma fraqueza. Para conquistar o topo, você precisa de uma mente fria que calcula os riscos e domina os impulsos. Mantenha a ambição no peito, mas a estratégia na cabeça. O homem impulsivo cai antes de alcançar a metade do caminho.\n\n#autocontrole #mentalidadeforte #estoicismo #disciplina #dascinzasaotopo"
   },
   {
-    quoteLine1: "A solidão só assusta quem ainda não descobriu",
-    quoteLine2: "que a própria companhia pode ser uma fortaleza.",
-    caption: "Estar sozinho não é isolamento, é preparação. É no silêncio da sua própria companhia que você reconstrói sua mente e foca no que realmente importa.\n\n#crescimento #solidao #forçamental #disciplina #dascirzasaotopo"
+    quoteLine1: "Não importa o tamanho da tempestade que te derrubou nas cinzas,",
+    quoteLine2: "o que define seu caráter é a velocidade com que você se levanta",
+    quoteLine3: "para marchar novamente.",
+    caption: "Cair é inevitável; aceitar a derrota é uma escolha. O homem forte não teme o chão, pois sabe que cada queda é apenas o prelúdio de um recomeço ainda mais forte. Levante-se, limpe a poeira e continue marchando. O topo aguarda quem se recusa a ficar no chão.\n\n#superação #motivação #forçadecarater #disciplina #dascinzasaotopo"
   },
   {
-    quoteLine1: "A maior ironia de se tornar inabalável",
-    quoteLine2: "é que o mundo passa a ignorar as suas tempestades.",
-    caption: "Quando você para de reclamar e começa a agir, as dificuldades param de te abalar. O homem forte enfrenta o caos com a mente calma e estruturada.\n\n#resiliencia #superacao #foco #firmeza #estoico"
+    quoteLine1: "A empolgação momentânea acende o início da sua caminhada,",
+    quoteLine2: "mas apenas a disciplina inflexível de fazer o necessário",
+    quoteLine3: "garante que você permaneça firme no topo da montanha.",
+    caption: "Motivação é o que te faz começar, mas a disciplina é o que te mantém de pé quando tudo dá errado. Não dependa de dias fáceis ou de sentimentos confortáveis. Domine a sua mente e faça o que precisa ser feito, com constância implacável.\n\n#disciplina #foco #habitos #mentalidadeforte #dascinzasaotopo"
   },
   {
-    quoteLine1: "A mente fraca reage a qualquer provocação.",
-    quoteLine2: "A mente forte observa, calcula e age com clareza.",
-    caption: "Não entregue o controle das suas emoções para os outros. Quem te provoca e consegue te irritar, passa a governar você. Escolha a serenidade e a estratégia.\n\n#autocontrole #inteligênciaemocional #estratégia #mentalidade #conduta"
+    quoteLine1: "Mantenha seus olhos fixos nos objetivos de longo prazo",
+    quoteLine2: "e ignore as distrações rápidas do caminho.",
+    quoteLine3: "A paciência estratégica constrói legados que o tempo nunca apaga.",
+    caption: "O homem que busca prazer rápido sabota o seu próprio futuro. Para construir algo grandioso, você precisa de foco de longo prazo e paciência estratégica. Ignore o barulho das distrações e comprometa-se com o processo. O seu legado está sendo forjado no silêncio de hoje.\n\n#estoicismo #legado #foco #compromisso #dascinzasaotopo"
   },
   {
-    quoteLine1: "O preço da disciplina dura apenas alguns anos.",
-    quoteLine2: "O peso do arrependimento vai durar a vida inteira.",
-    caption: "A dor do esforço diário é passageira, mas a frustração de olhar para trás e saber que você poderia ter feito melhor é permanente. Escolha o seu peso hoje.\n\n#disciplinadiaria #habitos #sucesso #foco #compromisso"
+    quoteLine1: "O homem de real valor prefere enfrentar a solidão de um deserto árido",
+    quoteLine2: "do que sentar-se na mesa de quem não demonstra o devido respeito",
+    quoteLine3: "por sua jornada.",
+    caption: "A solidão com dignidade é uma fortaleza; a má companhia é uma prisão. Não tenha medo de afastar-se de quem diminui o seu valor ou desrespeita os seus objetivos. Construa o seu caminho no seu próprio tempo, mesmo que precise caminhar sozinho.\n\n#respeitoproprio #homem #reflexão #limites #dascinzasaotopo"
   },
   {
-    quoteLine1: "Não fale sobre planos com pessoas",
-    quoteLine2: "que não conhecem o peso da sua escalada.",
-    caption: "Projetos grandes devem ser gerados no escuro. Falar demais dissipa sua energia e atrai o julgamento de quem se recusa a sair do conforto. Trabalhe em silêncio.\n\n#trabalhoemsilencio #privacidade #foco #legado #crescimento"
+    quoteLine1: "Sua rotina secreta é a assinatura invisível do seu sucesso sob a luz.",
+    quoteLine2: "Não procure plateia ou validação externa",
+    quoteLine3: "enquanto estiver construindo sua fortaleza no escuro.",
+    caption: "O progresso real é silencioso. Os hábitos que você pratica no escuro, quando ninguém está olhando, são as fundações da sua vitória pública. Pare de buscar aplausos precoces e concentre-se em construir sua estrutura com consistência diária.\n\n#disciplina #foco #trabalhoemsilencio #mentalidadeforte #dascinzasaotopo"
   },
   {
-    quoteLine1: "Erga-se de vez das suas próprias cinzas.",
-    quoteLine2: "Onde eles vêem o fim, você encontra o recomeço.",
-    caption: "O erro ou a derrota não definem quem você é. O que define a sua trajetória é a força com a qual você decide se levantar e marchar até o topo.\n\n#recomeço #superação #forçadecarater #disciplina #dascirzasaotopo"
+    quoteLine1: "Dominar a si mesmo é o maior poder que você pode alcançar.",
+    quoteLine2: "Quem reage no impulso entrega as chaves da sua própria vida",
+    quoteLine3: "nas mãos de qualquer provocador.",
+    caption: "O autodomínio é a sua maior defesa. Quem te provoca e consegue te irritar, passa a controlar você. Não entregue o controle das suas ações nas mãos dos outros. Responda com silêncio, aja com estratégia e mantenha-se inabalável.\n\n#autodominio #frieza #estoicismo #estratégia #dascinzasaotopo"
   },
   {
-    quoteLine1: "Quem vive buscando a aprovação alheia",
-    quoteLine2: "se torna prisioneiro de qualquer comentário.",
-    caption: "Se você precisa que os outros batam palmas para se sentir valorizado, você nunca será livre. Encontre sua própria aprovação na sua conduta diária.\n\n#liberdademental #autodominio #respeito #personalidade #homemdevalor"
+    quoteLine1: "As marcas e cicatrizes do seu passado são troféus de batalhas vencidas.",
+    quoteLine2: "Elas provam que você atravessou o inferno do sofrimento",
+    quoteLine3: "e saiu dele ainda mais forte.",
+    caption: "Não lamente as dificuldades que você enfrentou. Cada problema superado é um tijolo na construção da sua fortaleza mental. Suas cicatrizes são a prova de que a dor não foi capaz de te destruir. Você é o resultado da sua resiliência.\n\n#resiliencia #superação #força #mentalidadeforte #dascinzasaotopo"
   },
   {
-    quoteLine1: "Enquanto eles procuram atalhos fáceis,",
-    quoteLine2: "construa seu legado sobre o esforço invisível.",
-    caption: "Atalhos rápidos geram conquistas frágeis. O que tem valor real leva tempo, exige suor e é forjado longe dos holofotes. Comprometa-se com a constância.\n\n#constancia #trabalhodevalor #sucesso #legado #compromisso"
+    quoteLine1: "Não ore por uma jornada fácil ou por atalhos confortáveis.",
+    quoteLine2: "Desenvolva a força de caráter necessária para suportar qualquer tempestade",
+    quoteLine3: "e marchar até o fim.",
+    caption: "Atalhos fáceis criam homens fracos. O que tem valor real exige esforço, suor e constância. Não queira que os problemas diminuam; queira ser forte o suficiente para passar por cima de todos eles. O seu caráter é forjado na tempestade.\n\n#disciplina #forçadecarater #superação #foco #dascinzasaotopo"
   },
   {
-    quoteLine1: "A dor de hoje está apenas construindo",
-    quoteLine2: "a estrutura que você precisa ter no topo.",
-    caption: "Não ore por uma vida sem problemas; busque ser um homem forte o suficiente para superar qualquer obstáculo. A dificuldade é o seu treinamento.\n\n#superaçao #treinamentomental #força #condutadehomem #foco"
+    quoteLine1: "A estabilidade emocional é a sua armadura nas horas de caos.",
+    quoteLine2: "O homem estratégico observa em silêncio,",
+    quoteLine3: "calcula friamente os riscos e age apenas com clareza absoluta.",
+    caption: "No meio da tempestade, a calma é o seu superpoder. Não tome decisões sob o efeito de emoções temporárias. Respire, observe o cenário, calcule o seu próximo passo e age com frieza. O controle emocional decide quem vence no final.\n\n#autodominio #frieza #foco #estratégia #dascinzasaotopo"
   },
   {
-    quoteLine1: "O silêncio é a moldura da verdadeira força.",
-    quoteLine2: "Deixe que os seus resultados falem por você.",
-    caption: "Promessas e discursos não mudam realidades. Suas ações diárias e seus resultados finais são a única prova de valor que realmente importa. Mova-se em silêncio.\n\n#ações #resultados #silencio #foco #condutadiaria"
+    quoteLine1: "Aprenda a recolher sua presença em silêncio quando perceber",
+    quoteLine2: "que seus valores não são correspondidos.",
+    quoteLine3: "A ausência digna do homem forte constrange mais do que qualquer discussão.",
+    caption: "O silêncio é a resposta mais forte para quem não sabe valorizar a sua presença. Não tente provar o seu valor discutindo ou implorando atenção. Recolha-se com dignidade e deixe que a sua ausência ensine o que as suas palavras não conseguiram.\n\n#reflexão #homem #estoicismo #limites #dascinzasaotopo"
   }
 ];
 
 // Garantir que as pastas existam
 if (!fs.existsSync(rawVideosDir)) {
   fs.mkdirSync(rawVideosDir, { recursive: true });
+}
+if (!fs.existsSync(readyVideosDir)) {
+  fs.mkdirSync(readyVideosDir, { recursive: true });
 }
 if (!fs.existsSync(processedDir)) {
   fs.mkdirSync(processedDir, { recursive: true });
@@ -103,38 +118,29 @@ function getNextVideoId() {
 }
 
 // Chamar a API do Gemini para gerar frase e legenda
+// Retornar a frase local cravada para o Lote 2 de forma síncrona
 async function generateAIPost(apiKey, index) {
-  const prompt = `Escreva uma frase curta de alto impacto em português para um Instagram Reel sobre desenvolvimento pessoal masculino, disciplina ou mentalidade. A frase deve ter no máximo 2 linhas e no total 15 a 18 palavras. Também escreva uma legenda correspondente para o post do Instagram, com 2 a 3 parágrafos curtos e 4 a 5 hashtags estratégicas.
-  
-  Retorne a resposta EXCLUSIVAMENTE em formato JSON com esta estrutura:
-  {
-    "quoteLine1": "linha 1 da frase",
-    "quoteLine2": "linha 2 da frase (opcional)",
-    "caption": "conteúdo da legenda completo com as hashtags"
-  }`;
+  console.log(`  [Pauta Lote 2] Selecionando frase de pauta sequencial #${index + 1}`);
+  return fallbackQuotes[index % fallbackQuotes.length];
+}
 
-  try {
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
-      {
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          responseMimeType: "application/json"
-        }
-      },
-      { timeout: 10000 }
-    );
+function wrapText(text, maxCharsPerLine = 32) {
+  const words = text.split(/\s+/);
+  const lines = [];
+  let currentLine = '';
 
-    const text = response.data?.candidates?.[0]?.content?.parts?.[0]?.text;
-    if (text) {
-      return JSON.parse(text);
+  words.forEach(word => {
+    if ((currentLine + ' ' + word).trim().length <= maxCharsPerLine) {
+      currentLine = (currentLine + ' ' + word).trim();
+    } else {
+      if (currentLine) lines.push(currentLine);
+      currentLine = word;
     }
-    throw new Error('Resposta vazia da API do Gemini');
-  } catch (err) {
-    console.warn('  [Aviso] Falha ao chamar API do Gemini ou chave ausente, usando frase de fallback local sequencial.');
-    // Selecionar sequencialmente para garantir variedade sem repetição nos 12 vídeos
-    return fallbackQuotes[index % fallbackQuotes.length];
+  });
+  if (currentLine) {
+    lines.push(currentLine);
   }
+  return lines;
 }
 
 async function processVideos() {
@@ -180,21 +186,33 @@ async function processVideos() {
     
     // 1. Obter conteúdo do post (passando o índice para seleção sequencial no fallback)
     const postContent = await generateAIPost(apiKey, i);
-    console.log(`  Texto Linha 1: "${postContent.quoteLine1}"`);
-    console.log(`  Texto Linha 2: "${postContent.quoteLine2 || ''}"`);
     
-    // 2. Montar filtros do FFmpeg (mantendo a capitalização original da frase)
-    const line1Escaped = postContent.quoteLine1.replace(/'/g, "'\\\\''").replace(/:/g, '\\:');
-    const line2Escaped = (postContent.quoteLine2 || '').replace(/'/g, "'\\\\''").replace(/:/g, '\\:');
+    // Concatenar e re-quebrar o texto de forma inteligente para evitar cortes laterais no Reels vertical
+    const fullQuote = [postContent.quoteLine1, postContent.quoteLine2, postContent.quoteLine3]
+      .filter(Boolean)
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+      
+    // Limite máximo de 32 caracteres por linha garante que caiba na tela com folga nas bordas
+    const wrappedLines = wrapText(fullQuote, 32);
+    console.log(`  Frase Completa: "${fullQuote}"`);
+    console.log(`  Linhas Quebradas (${wrappedLines.length}):`);
+    wrappedLines.forEach((l, idx) => console.log(`    L${idx + 1}: "${l}"`));
     
-    // Construir drawtext com estilo "clean" (tamanho 32, borda fina 1.5 e sombra sutil, com espaçamento menor)
-    let drawtextFilter = '';
-    if (line2Escaped) {
-      drawtextFilter = `drawtext=fontfile='${fontFilePath}':text='${line1Escaped}':fontcolor=white:fontsize=32:x=(w-text_w)/2:y=(h-text_h)/2-20:borderw=1.5:bordercolor=black:shadowcolor=black@0.4:shadowx=1.5:shadowy=1.5`;
-      drawtextFilter += `,drawtext=fontfile='${fontFilePath}':text='${line2Escaped}':fontcolor=white:fontsize=32:x=(w-text_w)/2:y=(h-text_h)/2+20:borderw=1.5:bordercolor=black:shadowcolor=black@0.4:shadowx=1.5:shadowy=1.5`;
-    } else {
-      drawtextFilter = `drawtext=fontfile='${fontFilePath}':text='${line1Escaped}':fontcolor=white:fontsize=32:x=(w-text_w)/2:y=(h-text_h)/2:borderw=1.5:bordercolor=black:shadowcolor=black@0.4:shadowx=1.5:shadowy=1.5`;
-    }
+    // 2. Montar filtros do FFmpeg para cada linha de forma centralizada verticalmente
+    const lineHeight = 52; // Espaçamento vertical entre linhas
+    const totalH = wrappedLines.length * lineHeight;
+    const yStart = 1300 - (totalH / 2); // Centralizado verticalmente em y=1300 (região do peito/pescoço do soldado)
+    
+    const drawtextFilters = wrappedLines.map((line, index) => {
+      const lineEscaped = line.replace(/'/g, "'\\\\''").replace(/:/g, '\\:');
+      const yPos = Math.round(yStart + (index * lineHeight));
+      // Fonte Montserrat-SemiBold tamanho 36, com contorno preto grosso (borderw=2.0) para legibilidade absoluta
+      return `drawtext=fontfile='${fontFilePath}':text='${lineEscaped}':fontcolor=white:fontsize=36:x=(w-text_w)/2:y=${yPos}:borderw=2.0:bordercolor=black:shadowcolor=black@0.4:shadowx=1.5:shadowy=1.5`;
+    });
+    
+    const drawtextFilter = drawtextFilters.join(',');
     
     // Aplicar crop e scale na entrada de vídeo para remover a marca d'água "Veo" da base mantendo a proporção 9:16 sem distorcer
     const cropScaleFilter = `crop=(in_h-180)*9/16:in_h-180:(in_w-ow)/2:0,scale=1080:1920`;
@@ -205,12 +223,12 @@ async function processVideos() {
     
     if (fs.existsSync(logoPath)) {
       const logoPathEscaped = logoPath.replace(/\\/g, '/');
-      console.log('  Logo encontrada. Aplicando marca d\'água e removendo marca "Veo"...');
+      console.log('  Logo encontrada. Aplicando marca d\'água sólida e removendo marca "Veo"...');
       // 1. Aplicar crop e scale no vídeo de entrada [0:v]
-      // 2. Redimensionar logo para 140px de largura [1:v]
+      // 2. Redimensionar logo para 140px de largura e amplificar canal alpha para opacidade de 100% [1:v]
       // 3. Aplicar drawtext no vídeo cropped e scaled
       // 4. Sobrepor logo a 150px do rodapé
-      filterComplex = `[0:v]${cropScaleFilter}[cropped];[1:v]scale=140:-1[logo];[cropped]${drawtextFilter}[bg];[bg][logo]overlay=(W-w)/2:H-h-150`;
+      filterComplex = `[0:v]${cropScaleFilter}[cropped];[1:v]scale=140:-1,format=rgba,lut=a='val*3'[logo];[cropped]${drawtextFilter}[bg];[bg][logo]overlay=(W-w)/2:H-h-150`;
       command = `ffmpeg -y -i "${rawFilePath}" -i "${logoPathEscaped}" -filter_complex "${filterComplex}" -map 0:a? -c:a aac "${outputVideoPath}"`;
     } else {
       console.log('  Logo não encontrada. Removendo marca "Veo" e aplicando texto...');

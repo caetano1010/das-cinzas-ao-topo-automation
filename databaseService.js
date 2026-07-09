@@ -166,7 +166,9 @@ class DatabaseService {
       THREADS_ACCESS_TOKEN: process.env.THREADS_ACCESS_TOKEN || '',
       THREADS_ACCOUNT_ID: process.env.THREADS_ACCOUNT_ID || '',
       PORT: process.env.PORT || '3000',
-      VIDEOS_DIR: process.env.VIDEOS_DIR || 'd:/canais-dark/das-cinzas-ao-topo/Videos-prontos-03-06-26'
+      VIDEOS_DIR: process.env.VIDEOS_DIR || 'd:/canais-dark/das-cinzas-ao-topo/Videos-prontos-03-06-26',
+      AUTOMATION_PAUSED: process.env.AUTOMATION_PAUSED || 'false',
+      FIREBASE_STORAGE_BUCKET: process.env.FIREBASE_STORAGE_BUCKET || ''
     };
   }
 
@@ -179,6 +181,10 @@ class DatabaseService {
     process.env.FACEBOOK_PAGE_ID = settings.FACEBOOK_PAGE_ID || '';
     process.env.THREADS_ACCESS_TOKEN = settings.THREADS_ACCESS_TOKEN || '';
     process.env.THREADS_ACCOUNT_ID = settings.THREADS_ACCOUNT_ID || '';
+    process.env.AUTOMATION_PAUSED = settings.AUTOMATION_PAUSED || 'false';
+    if (settings.FIREBASE_STORAGE_BUCKET) {
+      process.env.FIREBASE_STORAGE_BUCKET = settings.FIREBASE_STORAGE_BUCKET;
+    }
     
     // 2. Gravar no arquivo .env
     const envContent = [
@@ -190,7 +196,9 @@ class DatabaseService {
       `THREADS_ACCESS_TOKEN=${settings.THREADS_ACCESS_TOKEN || ''}`,
       `THREADS_ACCOUNT_ID=${settings.THREADS_ACCOUNT_ID || ''}`,
       `PORT=${settings.PORT || process.env.PORT || 3000}`,
-      `VIDEOS_DIR=${settings.VIDEOS_DIR || process.env.VIDEOS_DIR || 'd:/canais-dark/das-cinzas-ao-topo/Videos-prontos-03-06-26'}`
+      `VIDEOS_DIR=${settings.VIDEOS_DIR || process.env.VIDEOS_DIR || 'd:/canais-dark/das-cinzas-ao-topo/Videos-prontos-03-06-26'}`,
+      `FIREBASE_STORAGE_BUCKET=${settings.FIREBASE_STORAGE_BUCKET || process.env.FIREBASE_STORAGE_BUCKET || ''}`,
+      `AUTOMATION_PAUSED=${settings.AUTOMATION_PAUSED || 'false'}`
     ].join('\n');
 
     try {

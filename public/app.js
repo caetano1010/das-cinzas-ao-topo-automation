@@ -66,6 +66,7 @@ async function fetchSettings() {
     renderSettingsForm();
     renderMetaStatus();
     renderTunnelStatus();
+    renderAutomationStatus();
     renderCloudSyncStatus();
     
     // Ajustar interface para ambiente Cloud (Render)
@@ -79,9 +80,9 @@ async function fetchSettings() {
 function adjustUIForCloud() {
   const isCloudEnv = window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1';
   if (isCloudEnv) {
-    // 1. Ocultar aba de Vídeos Prontos
+    // 1. A aba de Vídeos Prontos DEVE ficar visível na nuvem para download
     const videosTabBtn = document.getElementById('tab-btn-videos');
-    if (videosTabBtn) videosTabBtn.style.display = 'none';
+    if (videosTabBtn) videosTabBtn.style.display = 'flex';
     
     // 2. Ocultar card de Sincronização Nuvem no painel
     const cloudSyncCard = document.getElementById('cloud-sync-container');
@@ -137,7 +138,9 @@ async function saveMetaSettings(event) {
     INSTAGRAM_ACCOUNT_ID: document.getElementById('settings-instagram-id').value.trim(),
     FACEBOOK_PAGE_ID: document.getElementById('settings-facebook-id').value.trim(),
     THREADS_ACCESS_TOKEN: document.getElementById('settings-threads-token').value.trim(),
-    THREADS_ACCOUNT_ID: document.getElementById('settings-threads-id').value.trim()
+    THREADS_ACCOUNT_ID: document.getElementById('settings-threads-id').value.trim(),
+    AUTOMATION_PAUSED: document.getElementById('settings-automation-paused').checked ? 'true' : 'false',
+    FIREBASE_STORAGE_BUCKET: state.settings.FIREBASE_STORAGE_BUCKET || ''
   };
 
   try {
@@ -254,6 +257,25 @@ function renderTunnelStatus() {
   }
 }
 
+// Renderizar status da Automação (Pausada ou Ativa)
+function renderAutomationStatus() {
+  const badge = document.getElementById('automation-badge');
+  const dot = document.getElementById('automation-dot');
+  const text = document.getElementById('automation-text');
+
+  if (!badge || !dot || !text) return;
+
+  if (state.settings.AUTOMATION_PAUSED === 'true') {
+    dot.className = 'status-dot offline';
+    text.innerText = 'Automação Pausada';
+    badge.title = 'A automação de segundo plano (cron, fila e webhook/túnel) está suspensa.';
+  } else {
+    dot.className = 'status-dot online';
+    text.innerText = 'Automação Ativa';
+    badge.title = 'A automação está processando a fila e webhooks normalmente.';
+  }
+}
+
 // Renderizar status de Sincronização Cloud
 function renderCloudSyncStatus() {
   const modeText = document.getElementById('cloud-mode-text');
@@ -337,6 +359,11 @@ function renderSettingsForm() {
   document.getElementById('settings-facebook-id').value = state.settings.FACEBOOK_PAGE_ID || '';
   document.getElementById('settings-threads-token').value = state.settings.THREADS_ACCESS_TOKEN || '';
   document.getElementById('settings-threads-id').value = state.settings.THREADS_ACCOUNT_ID || '';
+  
+  const pausedCheckbox = document.getElementById('settings-automation-paused');
+  if (pausedCheckbox) {
+    pausedCheckbox.checked = state.settings.AUTOMATION_PAUSED === 'true';
+  }
 }
 
 // Renderizar resumo de contagens no painel
@@ -390,6 +417,13 @@ function selectVideoForPreview(video) {
   const player = document.getElementById('preview-video-player');
   player.src = video.url;
   player.load();
+
+  // Configurar Botão de Download
+  const downloadBtn = document.getElementById('btn-download-video');
+  if (downloadBtn) {
+    downloadBtn.href = video.url;
+    downloadBtn.download = video.fileName;
+  }
 
   // Preencher formulário
   document.getElementById('form-video-id').value = video.id;
@@ -590,4 +624,54 @@ async function mixSelectedMusic() {
     btn.disabled = false;
     btn.innerText = 'Juntar Trilha ao Vídeo (FFmpeg)';
   }
+}
+
+// Limpar banco de dados administrativamente
+async function clearDatabase() {
+  if (!confirm('ATENÇÃO: Isso deletará permanentemente toda a fila de agendamentos e o histórico de publicações (tanto local quanto na nuvem). Deseja continuar?')) {
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/admin/clear-db', { method: 'POST' });
+    const data = await res.json();
+    if (data.success) {
+      alert(data.message);
+      fetchSchedule(); // Atualizar visualização
+      switchTab('dashboard'); // Voltar para o painel principal
+    } else {
+      alert('Erro ao limpar dados: ' + data.message);
+    }
+  } catch (err) {
+    console.error('Erro na requisição de limpeza:', err);
+    alert('Erro de conexão ao limpar dados.');
+  }
+}
+
+// Copiar legenda para a área de transferência com feedback visual
+function copyCaptionToClipboard() {
+  const captionText = document.getElementById('form-caption').value;
+  if (!captionText) {
+    alert('Não há legenda para copiar.');
+    return;
+  }
+  
+  navigator.clipboard.writeText(captionText)
+    .then(() => {
+      const btn = document.getElementById('btn-copy-caption');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copiado!`;
+      btn.style.borderColor = 'var(--color-success)';
+      btn.style.color = 'var(--color-success)';
+      
+      setTimeout(() => {
+        btn.innerHTML = originalText;
+        btn.style.borderColor = 'var(--border-glass)';
+        btn.style.color = 'var(--accent-gold)';
+      }, 2000);
+    })
+    .catch(err => {
+      console.error('Erro ao copiar legenda:', err);
+      alert('Falha ao copiar legenda.');
+    });
 }
