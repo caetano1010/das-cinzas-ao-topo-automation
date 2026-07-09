@@ -582,3 +582,91 @@ body {
   font-size: 0.8rem;
   margin-top: auto;
 }
+
+/* Mixer Flex Row layout base */
+.mixer-flex-row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+}
+
+/* Responsividade Geral e Ajustes Mobile */
+
+/* 1. Telas Médias e Tablets (< 768px) */
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .status-badges-container {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  
+  .app-container {
+    padding: 16px;
+  }
+  
+  .app-nav {
+    /* Ocultar barra de rolagem horizontal nativa */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+  
+  .app-nav::-webkit-scrollbar {
+    display: none; /* Safari/Chrome */
+  }
+  
+  .nav-tab {
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    flex-shrink: 0; /* Impedir que as abas encolham no celular */
+  }
+}
+
+/* 2. Telas Pequenas e Smartphones (< 576px) */
+@media (max-width: 576px) {
+  .mixer-flex-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .mixer-flex-row audio {
+    width: 100% !important; /* Garantir largura total do player no celular */
+  }
+  
+  .form-group.row {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
+
+/* 3. Telas Muito Estreitas (< 480px) */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 12px;
+  }
+  
+  .cormorant-title {
+    font-size: 1.6rem;
+  }
+  
+  .cormorant-heading {
+    font-size: 1.4rem;
+    margin-bottom: 12px;
+  }
+  
+  .glass-card {
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  
+  .stats-grid {
+    flex-direction: column;
+    gap: 12px;
+  }
+}
