@@ -625,6 +625,64 @@ body {
     font-size: 0.9rem;
     flex-shrink: 0; /* Impedir que as abas encolham no celular */
   }
+
+  /* Transformar layout de videos em coluna de abas */
+  .videos-container-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .videos-list-card {
+    padding: 12px 16px !important;
+    margin-bottom: 0;
+    width: 100% !important;
+  }
+
+  .videos-list-card .card-subtitle {
+    display: none; /* Esconder texto de caminho da pasta física */
+  }
+
+  /* Transformar lista vertical de videos em carrossel horizontal de botões */
+  .videos-list {
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    max-height: none !important;
+    padding-bottom: 8px;
+    gap: 8px !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .videos-list::-webkit-scrollbar {
+    display: none; /* Chrome/Safari */
+  }
+
+  .video-item-btn {
+    width: auto !important;
+    flex-shrink: 0;
+    padding: 10px 16px !important;
+    border-radius: 8px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 100px;
+  }
+
+  .video-item-btn .video-title-item {
+    margin-bottom: 0 !important;
+    font-size: 0.85rem !important;
+  }
+
+  .video-item-btn .video-desc-item {
+    display: none !important; /* Ocultar a primeira linha de legenda longa na barra horizontal */
+  }
+
+  .video-preview-card {
+    padding: 16px !important;
+  }
 }
 
 /* 2. Telas Pequenas e Smartphones (< 576px) */
