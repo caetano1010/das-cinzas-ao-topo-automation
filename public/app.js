@@ -387,11 +387,21 @@ function renderVideosList() {
     btn.id = `video-btn-${video.id}`;
     btn.onclick = () => selectVideoForPreview(video);
     
+    // Verificar se já foi publicado no histórico de posts
+    const isPublished = state.posts.some(p => String(p.videoId) === String(video.id) && p.status === 'Publicado');
+    
     // Obter primeira linha da legenda para o preview
     const cleanCaption = video.caption ? video.caption.split('\n')[0] : 'Sem legenda configurada';
     
+    const badgeHtml = isPublished 
+      ? `<span class="badge publicado" style="margin-left: 8px; font-size: 0.65rem; padding: 2px 6px; border-radius: 4px; background: rgba(52, 199, 89, 0.15); color: #34c759; border: 1px solid rgba(52, 199, 89, 0.3);">Publicado</span>` 
+      : '';
+
     btn.innerHTML = `
-      <div class="video-title-item">Reel #${video.id}</div>
+      <div class="video-title-item" style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+        <span>Reel #${video.id}</span>
+        ${badgeHtml}
+      </div>
       <div class="video-desc-item">${cleanCaption}</div>
     `;
     container.appendChild(btn);
@@ -674,4 +684,47 @@ function copyCaptionToClipboard() {
       console.error('Erro ao copiar legenda:', err);
       alert('Falha ao copiar legenda.');
     });
+}
+
+// Marcar vídeo selecionado como publicado manualmente no histórico
+async function markAsPublished() {
+  const videoId = document.getElementById('form-video-id').value;
+  const fileName = document.getElementById('form-video-filename').value;
+  const caption = document.getElementById('form-caption').value;
+  
+  if (!videoId || !fileName) {
+    alert('Selecione um vídeo antes de marcar como publicado.');
+    return;
+  }
+
+  if (!confirm(`Deseja marcar o Reel #${videoId} como publicado no seu histórico de postagens?`)) {
+    return;
+  }
+
+  const btn = document.getElementById('btn-mark-published');
+  btn.disabled = true;
+  btn.innerText = 'Marcando...';
+
+  try {
+    const res = await fetch('/api/videos/publish-manual', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ videoId, fileName, caption })
+    });
+    const data = await res.json();
+
+    if (data.success) {
+      alert(data.message);
+      await fetchSchedule(); // Atualizar histórico no estado
+      renderVideosList(); // Atualizar visualização para mostrar o badge de publicado
+    } else {
+      alert('Erro: ' + data.message);
+    }
+  } catch (err) {
+    console.error('Erro ao registrar publicação manual:', err);
+    alert('Erro de conexão ao salvar no histórico.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Marcar como Publicado Manualmente`;
+  }
 }

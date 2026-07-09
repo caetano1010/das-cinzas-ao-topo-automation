@@ -162,11 +162,19 @@
               </div>
 
               <!-- Botão de Download do Vídeo -->
-              <div class="form-group" style="margin-bottom: 24px;">
+              <div class="form-group" style="margin-bottom: 12px;">
                 <a id="btn-download-video" class="btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; background: linear-gradient(135deg, #34c759 0%, #28a745 100%); color: white; width: 100%; text-align: center; font-weight: 600; padding: 12px; border-radius: 8px; box-shadow: none;" download>
                   <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                   Baixar Vídeo (MP4)
                 </a>
+              </div>
+
+              <!-- Botão de Marcar como Publicado -->
+              <div class="form-group" style="margin-bottom: 24px;">
+                <button type="button" id="btn-mark-published" onclick="markAsPublished()" class="btn-primary" style="display: flex; align-items: center; justify-content: center; gap: 8px; background: linear-gradient(135deg, var(--accent-gold) 0%, #b8860b 100%); color: #000; width: 100%; text-align: center; font-weight: 600; padding: 12px; border-radius: 8px; border: none; cursor: pointer; transition: var(--transition-smooth); box-shadow: none;">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  Marcar como Publicado Manualmente
+                </button>
               </div>
 
               <!-- Seção de Áudio / Trilha Sonora -->

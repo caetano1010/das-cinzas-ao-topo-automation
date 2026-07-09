@@ -458,6 +458,50 @@ app.post('/api/admin/clear-db', async (req, res) => {
   }
 });
 
+// Marcar vídeo como publicado manualmente no histórico
+app.post('/api/videos/publish-manual', async (req, res) => {
+  const { videoId, fileName, caption } = req.body;
+  
+  if (!videoId || !fileName) {
+    return res.status(400).json({ success: false, message: 'Parâmetros videoId e fileName são obrigatórios.' });
+  }
+  
+  const newPost = {
+    id: '_' + Math.random().toString(36).substr(2, 9),
+    videoId,
+    fileName,
+    caption: caption || '',
+    postInstagram: true,
+    postFacebook: false,
+    postThreads: false,
+    status: 'Publicado',
+    createdAt: new Date().toISOString(),
+    publishedAt: new Date().toISOString(),
+    error: null,
+    metaData: { manual: true }
+  };
+
+  try {
+    // 1. Gravar localmente
+    const localDb = db.read();
+    if (!localDb.posts) localDb.posts = [];
+    localDb.posts.push(newPost);
+    db.write(localDb);
+    console.log(`[Admin] Post manual ID ${newPost.id} gravado localmente.`);
+
+    // 2. Se Cloud estiver ativo, gravar no Firestore
+    if (firebase.isCloudEnabled()) {
+      await firebase.dbFirestore.collection('posts').doc(newPost.id).set(newPost);
+      console.log(`[Admin] Post manual ID ${newPost.id} gravado no Firestore.`);
+    }
+
+    res.json({ success: true, message: 'Reel marcado como publicado com sucesso!', post: newPost });
+  } catch (err) {
+    console.error('[Admin] Erro ao registrar publicação manual:', err);
+    res.status(500).json({ success: false, message: `Erro ao registrar publicação manual: ${err.message}` });
+  }
+});
+
 // ==================== WEBHOOKS DA META (FB/IG COMPOSTOS) ====================
 
 // Rota de Verificação do Webhook (GET) - Exigida pela Meta para ativação
